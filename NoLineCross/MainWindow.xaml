@@ -1,0 +1,27 @@
+﻿<Window x:Class="NoLineCross.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:NoLineCross.Controls"
+        Title="MainWindow" Height="600" Width="600">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Assets/Styles.xaml"></ResourceDictionary>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="9*" />
+        </Grid.RowDefinitions>
+
+        <Canvas Grid.Row="1" Name="_gameCanvas">
+        </Canvas>
+        
+        <TextBox x:Name="_textbox" Grid.Row="0" Width="50" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" Height="25"></TextBox>
+        <Button Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="80,0,0,0" Width="75" Height="25" Content="Generate" Click="ButtonBase_OnClick"></Button>
+        <Button Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="160,0,0,0" Width="75" Height="25" Content="Debug" Click="ButtonDebug_OnClick"></Button>
+        <TextBlock VerticalAlignment="Center" Text="Drag the point to make all line not corssed! Enter the point number you want and click Generate!" Margin="300,0,0,0" TextWrapping="Wrap"></TextBlock>
+    </Grid>
+</Window>
