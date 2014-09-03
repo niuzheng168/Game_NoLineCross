@@ -14,25 +14,24 @@
     /// <summary>
     ///     The game point.
     /// </summary>
-    public class MoveThumb : Thumb
+    public class MoveThumb : Thumb, IView
     {
+        public delegate void PointMoveEventHandler();
+
+        public event PointMoveEventHandler OnPointMove;
+
+        #region Static Fields
+
+        /// <summary>
+        /// The is highlight.
+        /// </summary>
         public static readonly DependencyProperty IsHighlight = DependencyProperty.Register(
-            "Highlight",
-            typeof(bool),
-            typeof(MoveThumb),
+            "Highlight", 
+            typeof(bool), 
+            typeof(MoveThumb), 
             new FrameworkPropertyMetadata(false));
 
-        public bool Highlight
-        {
-            get
-            {
-                return (bool)this.GetValue(IsHighlight);
-            }
-            set
-            {
-                this.SetValue(IsHighlight, value);
-            }
-        }
+        #endregion
 
         #region Constructors and Destructors
 
@@ -49,6 +48,26 @@
 
             this.DragDelta += this.MoveThumb_DragDelta;
             this.DragCompleted += this.MoveThumb_DragCompleted;
+        }
+
+        #endregion
+
+        #region Public Properties
+
+        /// <summary>
+        /// Gets or sets a value indicating whether highlight.
+        /// </summary>
+        public bool Highlight
+        {
+            get
+            {
+                return (bool)this.GetValue(IsHighlight);
+            }
+
+            set
+            {
+                this.SetValue(IsHighlight, value);
+            }
         }
 
         #endregion
@@ -132,7 +151,7 @@
         {
             UIElement curElement = sender as UIElement;
 
-            GamePoint point = FindParent<GamePoint>(curElement);
+            MoveThumb point = FindParent<MoveThumb>(curElement);
 
             if (point != null)
             {
@@ -183,5 +202,30 @@
         }
 
         #endregion
+
+        /// <summary>
+        /// Gets or sets the view model.
+        /// </summary>
+        public ViewModelBase ViewModel
+        {
+            get
+            {
+                return this.DataContext as ViewModelBase;
+            }
+            set
+            {
+                this.DataContext = value;
+            }
+        }
+
+        public void OnPositionChanged(Point lastPosition)
+        {
+            PointViewModel viewModel = this.ViewModel as PointViewModel;
+            viewModel.CurPosition = lastPosition;
+            foreach (LineViewModel line in viewModel.Lines)
+            {
+                line.CalculateLinePoints();
+            }
+        }
     }
 }
