@@ -1,6 +1,7 @@
 ﻿namespace NoLineCross.ViewModel
 {
     using System.Windows;
+    using System.Windows.Media;
     using System.Windows.Shapes;
 
     using WpfCommon.ModelBase;
@@ -64,14 +65,10 @@
             this.Point1 = p1;
             this.Point2 = p2;
 
-            this.Point1.Neighbors.Add(p2);
-            this.Point2.Neighbors.Add(p1);
-
-            this.Point1.Lines.Add(this);
-            this.Point2.Lines.Add(this);
-
-            this.Line = new Line();
-            this.CalculateLinePoints();
+            this.Segment = new Line();
+            this.Segment.StrokeThickness = 2;
+            this.Segment.Stroke = new SolidColorBrush(Colors.Black);
+            this.RefreshSegmentCoordinate();
         }
 
         #endregion
@@ -187,7 +184,7 @@
         /// <summary>
         /// Gets or sets the line.
         /// </summary>
-        public Line Line { get; set; }
+        public Line Segment { get; set; }
 
         #endregion
 
@@ -196,20 +193,20 @@
         /// <summary>
         /// The calculate line points.
         /// </summary>
-        public void CalculateLinePoints()
+        public void RefreshSegmentCoordinate()
         {
             Point c1 = new Point(
-                Point1.CurPosition.X + PointViewModel.Radio,
-                Point1.CurPosition.Y + PointViewModel.Radio);
+                this.Point1.CurPosition.X + PointViewModel.Radio,
+                this.Point1.CurPosition.Y + PointViewModel.Radio);
 
             Point c2 = new Point(
-                Point2.CurPosition.X + PointViewModel.Radio,
-                Point2.CurPosition.Y + PointViewModel.Radio);
+                this.Point2.CurPosition.X + PointViewModel.Radio,
+                this.Point2.CurPosition.Y + PointViewModel.Radio);
 
-            this.Line.X1 = c1.X;
-            this.Line.Y1 = c1.Y;
-            this.Line.X2 = c2.X;
-            this.Line.Y2 = c2.Y;
+            this.Segment.X1 = c1.X;
+            this.Segment.Y1 = c1.Y;
+            this.Segment.X2 = c2.X;
+            this.Segment.Y2 = c2.Y;
         }
 
         #endregion

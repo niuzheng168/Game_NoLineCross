@@ -1,6 +1,5 @@
 ﻿namespace NoLineCross.Controls
 {
-    using System;
     using System.Windows;
     using System.Windows.Controls;
     using System.Windows.Controls.Primitives;
@@ -14,21 +13,17 @@
     /// <summary>
     ///     The game point.
     /// </summary>
-    public class MoveThumb : Thumb, IView
+    public class GamePoint : Thumb, IView
     {
-        public delegate void PointMoveEventHandler();
-
-        public event PointMoveEventHandler OnPointMove;
-
         #region Static Fields
 
         /// <summary>
-        /// The is highlight.
+        ///     The is highlight.
         /// </summary>
-        public static readonly DependencyProperty IsHighlight = DependencyProperty.Register(
-            "Highlight", 
+        public static readonly DependencyProperty IsHighlightProperty = DependencyProperty.Register(
+            "IsHighlight", 
             typeof(bool), 
-            typeof(MoveThumb), 
+            typeof(GamePoint), 
             new FrameworkPropertyMetadata(false));
 
         #endregion
@@ -36,37 +31,65 @@
         #region Constructors and Destructors
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="MoveThumb" /> class.
+        ///     Initializes a new instance of the <see cref="GamePoint" /> class.
         /// </summary>
-        public MoveThumb()
+        public GamePoint()
         {
-            ResourceDictionary dict = new ResourceDictionary();
-            Uri uri = new Uri("../Assets/styles.xaml", UriKind.Relative);
-            dict.Source = uri;
-            Application.Current.Resources.MergedDictionaries.Add(dict);
-            ControlTemplate ct = (ControlTemplate)Application.Current.Resources["MoveThumbTemplate"];
-
             this.DragDelta += this.MoveThumb_DragDelta;
             this.DragCompleted += this.MoveThumb_DragCompleted;
         }
 
         #endregion
 
+        #region Delegates
+
+        /// <summary>
+        /// The point move event handler.
+        /// </summary>
+        public delegate void PointMoveEventHandler();
+
+        #endregion
+
+        #region Public Events
+
+        /// <summary>
+        /// The on point move.
+        /// </summary>
+        public event PointMoveEventHandler OnPointMoveCompleted;
+
+        #endregion
+
         #region Public Properties
 
         /// <summary>
-        /// Gets or sets a value indicating whether highlight.
+        ///     Gets or sets a value indicating whether highlight.
         /// </summary>
-        public bool Highlight
+        public bool IsHighlight
         {
             get
             {
-                return (bool)this.GetValue(IsHighlight);
+                return (bool)this.GetValue(IsHighlightProperty);
             }
 
             set
             {
-                this.SetValue(IsHighlight, value);
+                this.SetValue(IsHighlightProperty, value);
+            }
+        }
+
+        /// <summary>
+        ///     Gets or sets the view model.
+        /// </summary>
+        public ViewModelBase ViewModel
+        {
+            get
+            {
+                return this.DataContext as ViewModelBase;
+            }
+
+            set
+            {
+                this.DataContext = value;
             }
         }
 
@@ -106,6 +129,22 @@
             return FindParent<T>(parentObject);
         }
 
+        /// <summary>
+        /// The on position changed.
+        /// </summary>
+        /// <param name="lastPosition">
+        /// The last position.
+        /// </param>
+        public void OnPointMoving(Point lastPosition)
+        {
+            PointViewModel viewModel = this.ViewModel as PointViewModel;
+            viewModel.CurPosition = lastPosition;
+            foreach (LineViewModel line in viewModel.Lines)
+            {
+                line.RefreshSegmentCoordinate();
+            }
+        }
+
         #endregion
 
         #region Methods
@@ -121,9 +160,7 @@
         /// </param>
         private void MoveThumb_DragCompleted(object sender, DragCompletedEventArgs e)
         {
-            UIElement curElement = sender as UIElement;
-
-            GamePoint point = FindParent<GamePoint>(curElement);
+            GamePoint point = sender as GamePoint;
 
             if (point != null)
             {
@@ -131,10 +168,13 @@
                 foreach (PointViewModel nei in pv.Neighbors)
                 {
                     GamePoint p = nei.View as GamePoint;
-                    p.DisHighlight();
+                    p.IsHighlight = false;
                 }
 
-                point.OnPositionChangedOver();
+                if (this.OnPointMoveCompleted != null)
+                {
+                    this.OnPointMoveCompleted();
+                }
             }
         }
 
@@ -149,17 +189,16 @@
         /// </param>
         private void MoveThumb_DragDelta(object sender, DragDeltaEventArgs e)
         {
-            UIElement curElement = sender as UIElement;
+            GamePoint point = sender as GamePoint;
 
-            MoveThumb point = FindParent<MoveThumb>(curElement);
-
+            // MoveThumb point = FindParent<MoveThumb>(curElement);
             if (point != null)
             {
                 PointViewModel pv = point.ViewModel as PointViewModel;
                 foreach (PointViewModel nei in pv.Neighbors)
                 {
                     GamePoint p = nei.View as GamePoint;
-                    p.Highlight();
+                    p.IsHighlight = true;
                 }
 
                 Canvas c = point.Parent as Canvas;
@@ -197,35 +236,10 @@
                 Canvas.SetLeft(point, newLeft);
                 Canvas.SetTop(point, newTop);
 
-                point.OnPositionChanged(new Point(newLeft, newTop));
+                point.OnPointMoving(new Point(newLeft, newTop));
             }
         }
 
         #endregion
-
-        /// <summary>
-        /// Gets or sets the view model.
-        /// </summary>
-        public ViewModelBase ViewModel
-        {
-            get
-            {
-                return this.DataContext as ViewModelBase;
-            }
-            set
-            {
-                this.DataContext = value;
-            }
-        }
-
-        public void OnPositionChanged(Point lastPosition)
-        {
-            PointViewModel viewModel = this.ViewModel as PointViewModel;
-            viewModel.CurPosition = lastPosition;
-            foreach (LineViewModel line in viewModel.Lines)
-            {
-                line.CalculateLinePoints();
-            }
-        }
     }
 }

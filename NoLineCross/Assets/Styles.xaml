@@ -2,13 +2,13 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:controls="clr-namespace:NoLineCross.Controls">
     
-    <ControlTemplate x:Key="MoveThumbTemplate" TargetType="{x:Type controls:MoveThumb}">
-        <Ellipse Name="ellipse" Fill="Blue"/>
+    <ControlTemplate x:Key="MoveThumbTemplate" TargetType="{x:Type controls:GamePoint}">
+        <Ellipse Width="20" Height="20" Name="ellipse" Fill="Blue"/>
         <ControlTemplate.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
                 <Setter TargetName="ellipse" Property="Fill" Value="Pink" />
             </Trigger>
-            <Trigger Property="Highlight" Value="True">
+            <Trigger Property="IsHighlight" Value="True">
                 <Setter TargetName="ellipse" Property="Fill" Value="Red" />
             </Trigger>
         </ControlTemplate.Triggers>
@@ -16,7 +16,7 @@
 
     <ControlTemplate x:Key="DesignerItemTemplate" TargetType="ContentControl">
         <Grid DataContext="{Binding RelativeSource={RelativeSource TemplatedParent}}">
-            <controls:MoveThumb Template="{StaticResource MoveThumbTemplate}" />
+            <controls:GamePoint Template="{StaticResource MoveThumbTemplate}" />
             <ContentPresenter Content="{TemplateBinding ContentControl.Content}" />
         </Grid>
     </ControlTemplate>

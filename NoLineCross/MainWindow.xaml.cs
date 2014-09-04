@@ -1,9 +1,7 @@
 ﻿namespace NoLineCross
 {
-    using System;
     using System.Windows;
     using System.Windows.Controls;
-    using System.Windows.Media;
 
     using NoLineCross.Controls;
     using NoLineCross.ViewModel;
@@ -24,6 +22,8 @@
         public MainWindow()
         {
             this.InitializeComponent();
+            this.ViewModel = new GameViewModel();
+            this.ViewModel.View = this;
         }
 
         #endregion
@@ -48,6 +48,29 @@
 
         #endregion
 
+        #region Public Methods and Operators
+
+        /// <summary>
+        ///     Jump To Next Level.
+        /// </summary>
+        public void JumpToNextLevel()
+        {
+            GameViewModel gameViewModel = this.ViewModel as GameViewModel;
+
+            int level;
+            if (int.TryParse(this._textbox.Text, out level) == false)
+            {
+                level = 4;
+            }
+
+            gameViewModel.GenerateGame(level + 1);
+            this._textbox.Text = (level + 1).ToString();
+
+            this.SyncViewModelToUI();
+        }
+
+        #endregion
+
         #region Methods
 
         /// <summary>
@@ -61,147 +84,64 @@
         /// </param>
         private void ButtonBase_OnClick(object sender, RoutedEventArgs e)
         {
-            GameViewModel game = new GameViewModel();
-            Random r = new Random();
-            int lvl;
-            int pointCount;
-            if (int.TryParse(this._textbox.Text, out lvl) == false)
+            GameViewModel gameViewModel = this.ViewModel as GameViewModel;
+
+            int level;
+            if (int.TryParse(this._textbox.Text, out level) == false)
             {
-                pointCount = 6;
-            }
-            else
-            {
-                pointCount = lvl * (lvl - 1) / 2;
+                level = 4;
             }
 
-            game.GenerateGameLines(lvl);
+            gameViewModel.GenerateGame(level);
 
+            this.SyncViewModelToUI();
+        }
+
+        /// <summary>
+        /// The button debug_ on click.
+        /// </summary>
+        /// <param name="sender">
+        /// The sender.
+        /// </param>
+        /// <param name="e">
+        /// The e.
+        /// </param>
+        private void ButtonDebug_OnClick(object sender, RoutedEventArgs e)
+        {
+        }
+
+        /// <summary>
+        ///     Sync ViewModel To UI.
+        /// </summary>
+        private void SyncViewModelToUI()
+        {
             this._gameCanvas.Children.Clear();
+            GameViewModel gameViewModel = this.ViewModel as GameViewModel;
 
-            for (int i = 0; i < pointCount; i++)
+            if (gameViewModel != null)
             {
-                GamePoint point = new GamePoint();
-                point.OnPointMove += game.CheckState;
-                PointViewModel pv = new PointViewModel(i);
-
-                point.ViewModel = pv;
-                pv.View = point;
-
-                int left = r.Next((int)this._gameCanvas.ActualWidth - (PointViewModel.Radio * 2));
-                int height = r.Next((int)this._gameCanvas.ActualHeight - (PointViewModel.Radio * 2));
-                pv.CurPosition = new Point(left, height);
-
-                this._gameCanvas.Children.Add(point);
-                Canvas.SetLeft(point, pv.CurPosition.X);
-                Canvas.SetTop(point, pv.CurPosition.Y);
-                Canvas.SetZIndex(point, 10);
-                game.GamePoints.Add(pv);
-            }
-
-            int lineCount = 0;
-
-            foreach (Tuple<int, int> pair in game._connectedPairs)
-            {
-                int a = pair.Item1;
-                int b = pair.Item2;
-                LineViewModel lv = new LineViewModel(lineCount++, game.GamePoints[a], game.GamePoints[b]);
-                lv.CalculateLinePoints();
-                lv.Line.StrokeThickness = 2;
-                lv.Line.Stroke = new SolidColorBrush(Colors.Black);
-                this._gameCanvas.Children.Add(lv.Line);
-                game.GameLines.Add(lv);
-            }
-
-            return;
-
-
-            for (int i = 0; i < pointCount; i++)
-            {
-                int remainCount = 3 - game.GamePoints[i].Neighbors.Count;
-
-                if (remainCount == 0 && i + 1 < pointCount)
+                foreach (PointViewModel pointViewModel in gameViewModel.GamePoints)
                 {
-                    LineViewModel lv = new LineViewModel(lineCount++, game.GamePoints[i], game.GamePoints[i + 1]);
-                    lv.CalculateLinePoints();
-                    lv.Line.StrokeThickness = 2;
-                    lv.Line.Stroke = new SolidColorBrush(Colors.Black);
-                    this._gameCanvas.Children.Add(lv.Line);
-                    game.GameLines.Add(lv);
+                    GamePoint point = new GamePoint();
+                    point.Template = this.Resources["MoveThumbTemplate"] as ControlTemplate;
+                    point.OnPointMoveCompleted += gameViewModel.WinStateCheck;
+
+                    point.ViewModel = pointViewModel;
+                    pointViewModel.View = point;
+
+                    this._gameCanvas.Children.Add(point);
+                    Canvas.SetLeft(point, pointViewModel.CurPosition.X);
+                    Canvas.SetTop(point, pointViewModel.CurPosition.Y);
+                    Panel.SetZIndex(point, 10);
                 }
 
-                for (int j = i + 1; j <= i + remainCount && j < pointCount; j++)
+                foreach (LineViewModel lineViewModel in gameViewModel.GameLines)
                 {
-                    LineViewModel lv = new LineViewModel(lineCount++, game.GamePoints[i], game.GamePoints[j]);
-                    lv.CalculateLinePoints();
-                    lv.Line.StrokeThickness = 2;
-                    lv.Line.Stroke = new SolidColorBrush(Colors.Black);
-                    this._gameCanvas.Children.Add(lv.Line);
-                    game.GameLines.Add(lv);
+                    this._gameCanvas.Children.Add(lineViewModel.Segment);
                 }
             }
-
-            LineViewModel tail = new LineViewModel(lineCount++, game.GamePoints[pointCount - 1], game.GamePoints[0]);
-            tail.CalculateLinePoints();
-            tail.Line.StrokeThickness = 2;
-            tail.Line.Stroke = new SolidColorBrush(Colors.Black);
-            this._gameCanvas.Children.Add(tail.Line);
-            game.GameLines.Add(tail);
         }
 
         #endregion
-
-        private void ButtonDebug_OnClick(object sender, RoutedEventArgs e)
-        {
-            GameViewModel game = new GameViewModel();
-            Random r = new Random();
-            int lvl;
-            int pointCount;
-            if (int.TryParse(this._textbox.Text, out lvl) == false)
-            {
-                pointCount = 6;
-            }
-            else
-            {
-                pointCount = lvl * (lvl - 1) / 2;
-            }
-            this._gameCanvas.Children.Clear();
-            game.GenerateGameLines(lvl);
-
-            for (int i = 0; i < pointCount; i++)
-            {
-                GamePoint point = new GamePoint();
-                point.OnPointMove += game.CheckState;
-                PointViewModel pv = new PointViewModel(i);
-
-                point.ViewModel = pv;
-                pv.View = point;
-
-                double left = (game._intersections[i].Coordinate.X + 400);
-                double height = (game._intersections[i].Coordinate.Y + 600);
-                pv.CurPosition = new Point(left, height);
-
-                this._gameCanvas.Children.Add(point);
-                Canvas.SetLeft(point, pv.CurPosition.X);
-                Canvas.SetTop(point, pv.CurPosition.Y);
-                Canvas.SetZIndex(point, 10);
-                game.GamePoints.Add(pv);
-            }
-
-            int lineCount = 0;
-
-            foreach (Tuple<int, int> pair in game._connectedPairs)
-            {
-                int a = pair.Item1;
-                int b = pair.Item2;
-                LineViewModel lv = new LineViewModel(lineCount++, game.GamePoints[a], game.GamePoints[b]);
-                lv.CalculateLinePoints();
-                lv.Line.StrokeThickness = 2;
-                lv.Line.Stroke = new SolidColorBrush(Colors.Black);
-                this._gameCanvas.Children.Add(lv.Line);
-                game.GameLines.Add(lv);
-            }
-        }
-
-
     }
 }
