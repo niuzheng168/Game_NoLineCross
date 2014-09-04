@@ -91,11 +91,13 @@
             int maxLeft = (int)window._gameCanvas.ActualWidth - PointViewModel.Radio * 2;
             int maxHeight = (int)window._gameCanvas.ActualHeight - PointViewModel.Radio * 2;
 
+            int maxRadio = maxHeight < maxLeft ? maxHeight : maxLeft;
+
             for (int i = 0; i < _vertexCount; i++)
             {
                 PointViewModel pv = new PointViewModel(i);
-                int left = Ran.Next(maxLeft);
-                int height = Ran.Next(maxHeight);
+                double left = maxLeft / 2 + (maxRadio / 2 - 20) * Math.Cos(i * 2 * 3.1415927 / _vertexCount);
+                double height = maxHeight / 2 + (maxRadio / 2 - 20) * Math.Sin(i * 2 * 3.1415927 / _vertexCount);
                 pv.CurPosition = new Point(left, height);
                 this.GamePoints.Add(pv);
             }
@@ -323,7 +325,7 @@
 
             v3.Y = p1.Y - p2.Y;
 
-            return (this.CrossMul(v1, v3) * this.CrossMul(v2, v3) <= 0);
+            return (this.CrossMul(v1, v3) * this.CrossMul(v2, v3) < 0);
         }
 
         /// <summary>
@@ -382,7 +384,8 @@
                         }
 
                         points.Add(p);
-                        _pointYPool.Add((int)p.Y);
+                        _pointYPool.Add(coorY);
+                        _pointYPool.Add(coorY * -1);
                         break;
                     }
                 }
