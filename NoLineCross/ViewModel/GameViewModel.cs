@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Windows;
 
     using NoLineCross.Controls;
@@ -201,6 +202,7 @@
                         intersectionCount, 
                         tangentLines[i], 
                         tangentLines[j]);
+                    Debug.Assert(!double.IsNaN(intersection.Coordinate.X) && !double.IsNaN(intersection.Coordinate.Y));
                     intersections.Add(intersectionCount, intersection);
                     lineMatrix[i, j] = intersectionCount;
                     lineMatrix[j, i] = intersectionCount;
@@ -224,6 +226,7 @@
 
                 for (int j = 0; j < tmpList.Count - 1; j++)
                 {
+                    Debug.Assert(tmpList[j].Coordinate.X < tmpList[j + 1].Coordinate.X);
                     this._connectedPairs.Add(new Tuple<int, int>(tmpList[j].Id, tmpList[j + 1].Id));
                 }
             }
@@ -281,6 +284,8 @@
             p.Y = line1.K * (p.X - line1.TanPoint.X) + line1.TanPoint.Y;
 
             double debug = line2.K * (p.X - line2.TanPoint.X) + line2.TanPoint.Y;
+
+            Debug.Assert(p.Y - debug < 0.00001);
 
             intersection.Coordinate = p;
 
@@ -439,7 +444,18 @@
         /// </returns>
         public int CompareTo(Intersection other)
         {
-            return (int)(this.Coordinate.X - other.Coordinate.X);
+            if (this.Coordinate.X < other.Coordinate.X)
+            {
+                return -1;
+            }
+            else if (this.Coordinate.X > other.Coordinate.X)
+            {
+                return 1;
+            }
+            else
+            {
+                return 0;
+            }
         }
 
         #endregion
@@ -511,7 +527,7 @@
                     j--;
                 }
 
-                if (i < j)
+                if (i <= j)
                 {
                     T tmp = list[i];
                     list[i] = list[j];
@@ -527,9 +543,9 @@
                 QuickSort(list, left, j);
             }
 
-            if (j + 1 < right)
+            if (i < right)
             {
-                QuickSort(list, j + 1, right);
+                QuickSort(list, i, right);
             }
         }
 
